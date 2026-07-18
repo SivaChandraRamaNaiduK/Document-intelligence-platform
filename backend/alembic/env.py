@@ -8,7 +8,8 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
-from app.db.base import Base  # imports all models as a side effect
+from app.db.base import Base
+from app.models.user import User  # noqa: F401 — registers the model on Base.metadata for autogenerate
 
 config = context.config
 if config.config_file_name is not None:

@@ -4,6 +4,10 @@ Application configuration.
 Every setting is loaded from environment variables (or a .env file in dev).
 Nothing sensitive is ever hardcoded. This module is imported everywhere via
 `get_settings()`, which caches a single Settings instance.
+
+POSTGRES_PASSWORD and JWT_SECRET_KEY have no defaults on purpose: the app
+will refuse to start if .env doesn't supply them, rather than silently
+falling back to a guessable value.
 """
 from functools import lru_cache
 
@@ -18,13 +22,13 @@ class Settings(BaseSettings):
 
     # --- Database ---
     POSTGRES_USER: str = "docintel"
-    POSTGRES_PASSWORD: str = "docintel"
+    POSTGRES_PASSWORD: str          # required — must come from .env
     POSTGRES_DB: str = "docintel"
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5433
-    
+
     # --- Auth (used from Week 2) ---
-    JWT_SECRET_KEY: str = "CHANGE_ME_IN_ENV_FILE"
+    JWT_SECRET_KEY: str             # required — must come from .env
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7

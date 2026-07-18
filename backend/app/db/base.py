@@ -1,15 +1,12 @@
 """
 Declarative base. Every SQLAlchemy model inherits from Base.
 
-IMPORTANT: import all models here so Alembic's autogenerate can see them.
-When you add a new model file (documents, chunks, ...), add its import below.
+Model imports for Alembic's autogenerate live in alembic/env.py, not here —
+importing them here creates a circular import the moment any other module
+imports app.models.* before app.db.base has finished loading.
 """
 from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
     pass
-
-
-# Model imports (needed for Alembic autogenerate) — noqa keeps linters quiet
-from app.models.user import User  # noqa: E402, F401
