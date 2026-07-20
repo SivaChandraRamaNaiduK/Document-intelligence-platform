@@ -34,11 +34,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # --- LLM / embeddings (used from Week 4-5) ---
-    LLM_PROVIDER: str = "anthropic"    # anthropic | openai
-    ANTHROPIC_API_KEY: str = ""
-    OPENAI_API_KEY: str = ""
-    EMBEDDING_DIM: int = 1536
-
+    LLM_PROVIDER: str = "cohere"    # cohere (embeddings + chat)
+    COHERE_API_KEY: str = ""
+    EMBEDDING_DIM: int = 1024        # embed-english-v3.0 output size
     # --- CORS ---
     FRONTEND_ORIGIN: str = "http://localhost:5173"
 

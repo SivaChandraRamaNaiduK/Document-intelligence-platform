@@ -24,6 +24,14 @@ from app.services.ingestion import (
     extract_text,
 )
 
+from app.services.embeddings import embed_documents
+
+from sqlalchemy import select
+
+from app.schemas.search import SearchRequest, SearchResult
+from app.services.embeddings import embed_query
+
+
 router = APIRouter(prefix="/documents", tags=["documents"])
 
 MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
@@ -66,8 +74,9 @@ async def upload_document(
             document.status = "failed"
             document.error_message = "No extractable text found in file."
         else:
-            for i, content in enumerate(pieces):
-                db.add(Chunk(document_id=document.id, chunk_index=i, content=content))
+            vectors = embed_documents(pieces)
+            for i, (content, vector) in enumerate(zip(pieces, vectors)):
+                db.add(Chunk(document_id=document.id, chunk_index=i, content=content, embedding=vector))
             document.status = "ready"
 
     except UnsupportedFileTypeError as e:
@@ -126,3 +135,45 @@ async def delete_document(
 
     await db.delete(document)  # cascades to chunks via ondelete="CASCADE"
     await db.commit()
+
+@router.post("/search", response_model=list[SearchResult])
+async def semantic_search(
+    payload: SearchRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[SearchResult]:
+    query_vector = embed_query(payload.query)
+
+    stmt = (
+        select(
+            Chunk.id,
+            Chunk.document_id,
+            Chunk.chunk_index,
+            Chunk.content,
+            Document.filename,
+            Chunk.embedding.cosine_distance(query_vector).label("distance"),
+        )
+        .join(Document, Document.id == Chunk.document_id)
+        .where(Document.user_id == current_user.id)
+        .where(Chunk.embedding.is_not(None))
+    )
+
+    if payload.document_ids:
+        stmt = stmt.where(Chunk.document_id.in_(payload.document_ids))
+
+    stmt = stmt.order_by("distance").limit(payload.top_k)
+
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    return [
+        SearchResult(
+            chunk_id=row.id,
+            document_id=row.document_id,
+            filename=row.filename,
+            chunk_index=row.chunk_index,
+            content=row.content,
+            similarity_score=1 - row.distance,  # cosine_distance -> similarity
+        )
+        for row in rows
+    ]

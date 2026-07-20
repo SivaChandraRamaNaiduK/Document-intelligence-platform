@@ -29,5 +29,7 @@ httpx==0.28.1
 pypdf==5.1.0
 python-docx==1.1.2
 aiofiles==24.1.0
-
+#chunking
 tiktoken==0.8.0
+#embeddings
+cohere==5.13.3
