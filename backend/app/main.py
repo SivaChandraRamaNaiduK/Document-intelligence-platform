@@ -8,7 +8,7 @@ from the resume bullet.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routers import auth, health, documents
+from app.api.routers import auth, chat, documents, health
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -30,7 +30,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(documents.router)
-
+app.include_router(chat.router)
 # Week 2: app.include_router(auth.router)
 # Week 3: app.include_router(documents.router)
 # Week 5: app.include_router(chat.router)

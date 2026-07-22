@@ -33,3 +33,6 @@ aiofiles==24.1.0
 tiktoken==0.8.0
 #embeddings
 cohere==5.13.3
+
+# --- Multi-agent orchestration (Week 5) ---
+langgraph==0.2.62
