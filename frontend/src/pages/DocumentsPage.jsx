@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import * as documentsApi from "../api/documents";
+import { Link } from "react-router-dom";
 
 const STATUS_STYLES = {
   processing: "bg-yellow-500/20 text-yellow-300",
@@ -71,7 +72,12 @@ export default function DocumentsPage() {
     <div className="min-h-screen bg-slate-900 px-4 py-8">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-white">Documents</h1>
+          <div className="flex items-center gap-6">
+            <h1 className="text-2xl font-bold text-white">Documents</h1>
+            <Link to="/chat" className="text-sm text-slate-400 hover:text-white">
+              Chat
+            </Link>
+          </div>
           <div className="flex items-center gap-4">
             <span className="text-slate-400 text-sm">{user?.email}</span>
             <button
