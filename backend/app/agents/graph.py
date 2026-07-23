@@ -196,6 +196,44 @@ Analysis:"""
     return {**state, "answer": response.message.content[0].text.strip()}
 
 
+def build_prompt(route: str, query: str, retrieved: list[dict]) -> str:
+    """
+    Builds the same prompt each generation agent uses, so the streaming
+    endpoint can request a streamed completion with identical instructions.
+    """
+    context = _build_context(retrieved)
+
+    if route == "summarize":
+        return f"""Summarize the following document content clearly and concisely,
+covering the main points a reader would need to understand it.
+
+Content:
+{context}
+
+Summary:"""
+
+    if route == "analyze":
+        return f"""Analyze the following document content in response to the user's request.
+Identify key themes, entities, arguments, or comparisons as relevant.
+
+Content:
+{context}
+
+Request: {query}
+
+Analysis:"""
+
+    # default: qa
+    return f"""Answer the question using ONLY the context below. If the context doesn't
+contain the answer, say so clearly instead of guessing.
+
+Context:
+{context}
+
+Question: {query}
+
+Answer:"""
+
 # ---------- Graph assembly ----------
 
 def build_graph():
