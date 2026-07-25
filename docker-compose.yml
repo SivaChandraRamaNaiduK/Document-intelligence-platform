@@ -15,5 +15,26 @@ services:
       timeout: 5s
       retries: 10
 
+  backend:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      FRONTEND_ORIGIN: http://localhost:5173
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
 volumes:
   pgdata:
