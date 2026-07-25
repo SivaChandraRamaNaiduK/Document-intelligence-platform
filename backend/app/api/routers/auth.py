@@ -11,6 +11,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from fastapi import Request
+
+limiter = Limiter(key_func=get_remote_address)
+
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -26,7 +32,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def register(payload: UserRegister, db: AsyncSession = Depends(get_db)) -> User:
+@limiter.limit("5/minute")
+async def register(request: Request, payload: UserRegister, db: AsyncSession = Depends(get_db)) -> User:
     existing = await db.execute(select(User).where(User.email == payload.email))
     if existing.scalar_one_or_none() is not None:
         raise HTTPException(
@@ -42,7 +49,8 @@ async def register(payload: UserRegister, db: AsyncSession = Depends(get_db)) ->
 
 
 @router.post("/login", response_model=TokenPair)
-async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)) -> TokenPair:
+@limiter.limit("10/minute")
+async def login(request: Request, payload: UserLogin, db: AsyncSession = Depends(get_db)) -> TokenPair:
     result = await db.execute(select(User).where(User.email == payload.email))
     user = result.scalar_one_or_none()
 

@@ -4,8 +4,9 @@ interaction (query, route taken, answer, latency) for observability.
 """
 import time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from app.agents.graph import get_graph
 from app.api.deps import get_current_user
@@ -21,11 +22,18 @@ from fastapi.responses import StreamingResponse
 
 from app.agents.graph import build_prompt, retrieval_node, router_node, _client, CHAT_MODEL
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
 @router.post("", response_model=ChatResponse)
+@limiter.limit("20/minute")
 async def chat(
+    request: Request,
     payload: ChatRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -66,7 +74,9 @@ async def chat(
     )
 
 @router.post("/stream")
+@limiter.limit("20/minute")
 async def chat_stream(
+    request: Request,
     payload: ChatRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),

@@ -36,3 +36,5 @@ cohere==5.13.3
 
 # --- Multi-agent orchestration (Week 5) ---
 langgraph==0.2.62
+# --- Rate limiting (Week 8) ---
+slowapi==0.1.9

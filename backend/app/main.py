@@ -10,14 +10,22 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routers import auth, chat, documents, health
 from app.core.config import get_settings
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 settings = get_settings()
+
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title=settings.APP_NAME,
     debug=settings.DEBUG,
     docs_url="/docs",
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,

@@ -31,6 +31,11 @@ from sqlalchemy import select
 from app.schemas.search import SearchRequest, SearchResult
 from app.services.embeddings import embed_query
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from fastapi import Request
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
@@ -38,7 +43,9 @@ MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
 
 
 @router.post("/upload", response_model=DocumentRead, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def upload_document(
+    request: Request,
     file: UploadFile,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
