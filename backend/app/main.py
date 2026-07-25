@@ -15,8 +15,11 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware
 
-settings = get_settings()
+from app.core.logging_config import configure_logging, logger
 
+
+settings = get_settings()
+configure_logging()
 limiter = Limiter(key_func=get_remote_address)
 
 MAX_REQUEST_SIZE_BYTES = 25 * 1024 * 1024  # 25 MB — slightly above the 20 MB upload limit
@@ -32,6 +35,21 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
                 content={"detail": "Request body too large."},
             )
         return await call_next(request)
+
+
+import time
+
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        start = time.perf_counter()
+        response = await call_next(request)
+        duration_ms = int((time.perf_counter() - start) * 1000)
+        logger.info(
+            f"{request.method} {request.url.path} -> {response.status_code} ({duration_ms}ms)"
+        )
+        return response
+
     
 app = FastAPI(
     title=settings.APP_NAME,
@@ -49,6 +67,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(RequestSizeLimitMiddleware)
 
 app.include_router(health.router)
 app.include_router(auth.router)
