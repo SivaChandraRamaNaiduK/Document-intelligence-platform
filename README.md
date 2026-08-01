@@ -25,6 +25,7 @@ Built end-to-end: FastAPI backend, PostgreSQL + pgvector for semantic search, La
 - **Fully Dockerized** — one `docker compose up` runs Postgres, backend, and frontend together
 
 ## Architecture
+
 ┌─────────────┐ ┌──────────────┐ ┌─────────────────┐
 │ React │─────▶│ FastAPI │─────▶│ PostgreSQL │
 │ (nginx) │◀─────│ backend │◀─────│ + pgvector │
@@ -42,6 +43,8 @@ Built end-to-end: FastAPI backend, PostgreSQL + pgvector for semantic search, La
 │ Cohere API │
 │ (embed + chat)│
 └───────────────┘
+
+
 **Query flow:** user message → router agent classifies intent (qa / summarize / analyze) → retrieval node fetches relevant chunks (via pgvector cosine similarity, or full-document order for summaries) → specialized agent generates a grounded answer with citations → response streams back to the client → interaction logged to the database.
 
 ## Tech Stack
@@ -128,6 +131,7 @@ doc-intel/
 │ ├── nginx.conf
 │ └── Dockerfile
 └── docker-compose.yml
+
 
 ## License
 
