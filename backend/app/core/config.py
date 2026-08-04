@@ -44,19 +44,27 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        """Async URL for SQLAlchemy (asyncpg driver)."""
-        return (
+        """Async URL for SQLAlchemy (asyncpg driver). Neon requires SSL."""
+        base = (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
+        if "neon.tech" in self.POSTGRES_HOST:
+            base += "?ssl=require"
+        return base
 
+    
     @property
     def sync_database_url(self) -> str:
-        """Sync URL used only by Alembic migrations."""
-        return (
+        """Sync URL used only by Alembic migrations. Neon requires SSL."""
+        base = (
             f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
+        if "neon.tech" in self.POSTGRES_HOST:
+            base += "?sslmode=require"
+        return base
+    
 
 
 @lru_cache
