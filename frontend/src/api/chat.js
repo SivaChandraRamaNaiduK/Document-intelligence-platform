@@ -10,7 +10,7 @@
  * onToken(text)            — called for each incremental chunk of the answer
  * onDone(latencyMs)        — called when the stream completes
  */
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 export async function streamChat(message, documentIds, { onMeta, onToken, onDone, onError }) {
   const accessToken = localStorage.getItem("access_token");
