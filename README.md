@@ -6,8 +6,10 @@ Built end-to-end: FastAPI backend, PostgreSQL + pgvector for semantic search, La
 
 ## Live Demo
 
-- **App:** [link once deployed]
-- **API docs:** [Railway backend URL]/docs
+- **App:** https://document-intelligence-platform-eight.vercel.app
+- **API docs:** https://doc-intel-backend-xzqo.onrender.com/docs
+
+> Note: the backend is hosted on Render's free tier and may take 30-60 seconds to wake up on the first request after a period of inactivity.
 
 ## Features
 
@@ -26,32 +28,22 @@ Built end-to-end: FastAPI backend, PostgreSQL + pgvector for semantic search, La
 
 ## Architecture
 
-┌─────────────┐ ┌──────────────┐ ┌─────────────────┐
-│ React │─────▶│ FastAPI │─────▶│ PostgreSQL │
-│ (nginx) │◀─────│ backend │◀─────│ + pgvector │
-└─────────────┘ SSE └──────┬───────┘ └─────────────────┘
-│
-▼
-┌───────────────┐
-│ LangGraph │
-│ multi-agent │
-│ system │
-└───────┬───────┘
-│
-▼
-┌───────────────┐
-│ Cohere API │
-│ (embed + chat)│
-└───────────────┘
-
+```mermaid
+graph LR
+    A[React Frontend<br/>nginx] -->|HTTPS + SSE| B[FastAPI Backend]
+    B --> C[(PostgreSQL<br/>+ pgvector)]
+    B --> D[LangGraph<br/>Multi-Agent System]
+    D --> E[Cohere API<br/>embed + chat]
+```
 
 **Query flow:** user message → router agent classifies intent (qa / summarize / analyze) → retrieval node fetches relevant chunks (via pgvector cosine similarity, or full-document order for summaries) → specialized agent generates a grounded answer with citations → response streams back to the client → interaction logged to the database.
+
 
 ## Tech Stack
 
 **Backend:** FastAPI, SQLAlchemy (async), Alembic, PostgreSQL + pgvector, LangGraph, Cohere API, slowapi, tiktoken, pypdf, python-docx
 
-**Frontend:** React, Vite, Tailwind CSS, axios, react-router-dom
+**Deployment:** Neon (Postgres + pgvector), Render (backend), Vercel (frontend) — all free tiers
 
 **Infrastructure:** Docker, Docker Compose, nginx
 
@@ -100,7 +92,7 @@ A few choices worth calling out, since they involved real tradeoffs:
 - **Summarization retrieval:** similarity search performs poorly against vague instructions like "summarize this document" (the instruction itself doesn't semantically match any content). The summarizer instead fetches chunks in document order when a specific document is selected, trading some latency for dramatically better output coherence.
 - **Single LLM provider (Cohere):** used for both embeddings and chat generation, simplifying key management. `LLM_PROVIDER` is set up as a config value so swapping providers later wouldn't require touching business logic.
 - **Full-text citations:** citations return the complete matched chunk (not a short excerpt), prioritizing transparency over compactness.
-- **Separate frontend/backend hosting:** the frontend deploys to Vercel (static CDN) and the backend+DB to Railway (stateful services), mirroring how production systems are typically architected rather than co-locating everything on one server.
+- - **Separate frontend/backend/database hosting:** the frontend deploys to Vercel (static CDN), the backend to Render, and the database to Neon (serverless Postgres) — mirroring how production systems are typically architected across specialized services rather than co-locating everything on one server. Neon was chosen specifically for its permanent free tier with pgvector support (unlike time-limited free database offerings elsewhere).
 
 ## Known Limitations & Future Improvements
 
@@ -110,29 +102,29 @@ A few choices worth calling out, since they involved real tradeoffs:
 
 ## Project Structure
 
+```
 doc-intel/
 ├── backend/
-│ ├── app/
-│ │ ├── agents/ # LangGraph multi-agent system
-│ │ ├── api/routers/ # auth, documents, chat, health
-│ │ ├── core/ # config, security, logging
-│ │ ├── db/ # async session, declarative base
-│ │ ├── models/ # SQLAlchemy models
-│ │ ├── schemas/ # Pydantic request/response models
-│ │ └── services/ # ingestion, embeddings
-│ ├── alembic/ # database migrations
-│ └── Dockerfile
+│   ├── app/
+│   │   ├── agents/       # LangGraph multi-agent system
+│   │   ├── api/routers/  # auth, documents, chat, health
+│   │   ├── core/         # config, security, logging
+│   │   ├── db/           # async session, declarative base
+│   │   ├── models/       # SQLAlchemy models
+│   │   ├── schemas/      # Pydantic request/response models
+│   │   └── services/     # ingestion, embeddings
+│   ├── alembic/          # database migrations
+│   └── Dockerfile
 ├── frontend/
-│ ├── src/
-│ │ ├── api/ # axios client, endpoint wrappers
-│ │ ├── components/ # ProtectedRoute
-│ │ ├── context/ # AuthContext
-│ │ └── pages/ # Login, Register, Documents, Chat
-│ ├── nginx.conf
-│ └── Dockerfile
+│   ├── src/
+│   │   ├── api/          # axios client, endpoint wrappers
+│   │   ├── components/   # ProtectedRoute
+│   │   ├── context/      # AuthContext
+│   │   └── pages/        # Login, Register, Documents, Chat
+│   ├── nginx.conf
+│   └── Dockerfile
 └── docker-compose.yml
-
-
+```
 ## License
 
 MIT
